@@ -1,0 +1,39 @@
+.row {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.rowUser {
+  justify-content: flex-end;
+}
+
+.bubble {
+  max-width: min(560px, 80%);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-bubble);
+  font-size: var(--text-base);
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.bubbleCoach {
+  background: var(--color-surface);
+  color: var(--color-text);
+  border-bottom-left-radius: 4px;
+}
+
+.bubbleUser {
+  background: rgba(61, 126, 255, 0.12);
+  border: 1px solid rgba(61, 126, 255, 0.35);
+  color: var(--color-text);
+  border-bottom-right-radius: 4px;
+}
+
+.bubble[data-status="sending"] {
+  opacity: 0.6;
+}
+
+.bubble[data-status="error"] {
+  border: 1px solid var(--color-danger);
+}

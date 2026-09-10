@@ -1,0 +1,41 @@
+{
+  "_comment": "Documents which MCP servers and skills this project uses. No secrets here by design — actual credentials live in the local (machine-private) Claude Code config, never in this repo. See CLAUDE.md 'Never commit secrets'.",
+  "mcpServers": {
+    "n8n-mcp": {
+      "source": "https://github.com/czlonkowski/n8n-mcp",
+      "scope": "local",
+      "transport": "stdio",
+      "command": "npx n8n-mcp",
+      "env": [
+        "MCP_MODE",
+        "LOG_LEVEL",
+        "DISABLE_CONSOLE_OUTPUT",
+        "N8N_API_URL",
+        "N8N_API_KEY"
+      ],
+      "n8nInstance": "https://n8n.ahmedaljaly.cfd",
+      "notes": "N8N_API_KEY grants full n8n management tools (create/update workflows). Stored only in the local Claude Code config on this machine."
+    },
+    "github": {
+      "source": "https://github.com/github/github-mcp-server",
+      "scope": "local",
+      "transport": "http",
+      "url": "https://api.githubcopilot.com/mcp",
+      "auth": "Bearer token (GitHub PAT) via Authorization header",
+      "notes": "PAT stored only in the local Claude Code config on this machine, not in this repo."
+    }
+  },
+  "plugins": {
+    "frontend-design": {
+      "source": "anthropics/claude-code (frontend-design plugin)",
+      "scope": "user",
+      "status": "enabled"
+    },
+    "n8n-mcp-skills": {
+      "source": "https://github.com/czlonkowski/n8n-skills",
+      "scope": "user",
+      "status": "enabled",
+      "skillCount": 14
+    }
+  }
+}

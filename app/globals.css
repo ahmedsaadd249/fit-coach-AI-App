@@ -1,0 +1,97 @@
+:root {
+  color-scheme: dark;
+
+  /* Color -- deep teal-charcoal base, two accents split strictly by role:
+     azure for interactive/UI actions, amber for achievement/gamification only. */
+  --color-bg: #12181a;
+  --color-surface: #1b2326;
+  --color-surface-raised: #212b2e;
+  --color-text: #edefef;
+  --color-text-muted: #8b9598;
+
+  --color-accent-action: #3d7eff;
+  --color-accent-action-hover: #2f63d6;
+  --color-accent-achievement: #f5a623;
+  --color-accent-achievement-strong: #d68a0f;
+  --color-danger: #e2665a;
+
+  --color-border: rgba(237, 239, 239, 0.08);
+
+  /* Type -- next/font/google sets these variables on <html>; reference them
+     directly rather than redeclaring fallback stacks. */
+  --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Manrope", ui-sans-serif, system-ui, sans-serif;
+
+  --text-xs: 13px;
+  --text-sm: 15px;
+  --text-base: 17px;
+  --text-md: 20px;
+  --text-lg: 25px;
+  --text-xl: 32px;
+  --text-2xl: 44px;
+  --text-hero: 64px;
+
+  /* Radius -- deliberately non-uniform per element, not one value everywhere. */
+  --radius-bubble: 18px;
+  --radius-control: 10px;
+  --radius-input: 12px;
+  --radius-pill: 999px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  --shadow-overlay: 0 20px 60px rgba(0, 0, 0, 0.45);
+  --glow-achievement: 0 0 40px rgba(245, 166, 35, 0.25);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+a {
+  color: var(--color-accent-action);
+}
+
+button,
+input,
+textarea {
+  font-family: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent-action);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
