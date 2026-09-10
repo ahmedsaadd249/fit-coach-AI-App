@@ -5,7 +5,7 @@ import type { ApiErrorKind } from "../lib/types";
 const COPY_BY_KIND: Record<ApiErrorKind, string> = {
   validation_error: "Rally needs a bit more to go on — try rephrasing that.",
   rate_limit_exceeded:
-    "Rally's catching its breath — you're sending messages faster than the coach can answer. Wait a few seconds and try again.",
+    "Rally's catching its breath — that's a lot of messages in a short stretch. Give it a moment and try again.",
   upstream_timeout: "The coach got stuck mid-thought. Try sending that again.",
   upstream_error: "Something went sideways on the coach's end. Give it another shot.",
   auth_error: "Rally's coach isn't configured correctly. Check the server credentials.",

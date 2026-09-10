@@ -12,6 +12,72 @@ export const maxDuration = 30;
 
 const COACH_REQUEST_TIMEOUT_MS = 25_000;
 
+/**
+ * Per-IP rate limiting. This endpoint is public and every request spends real
+ * OpenAI credits, so without a cap anyone who finds the URL can drain the
+ * budget in a loop.
+ *
+ * Two windows: the short one blocks rapid scripted loops, the long one caps
+ * how much a single IP can spend even at a patient pace. Both sit far above a
+ * real conversation (a person sends a message every 10-30 seconds).
+ *
+ * Caveat: state is per warm serverless instance, not shared across them.
+ * Vercel reuses warm instances, so a single client hammering the endpoint does
+ * get caught in practice -- but this is not a distributed limiter, and traffic
+ * spread across cold starts can slip through. If that ever matters, move the
+ * counter to a shared store (Vercel KV / Upstash) behind this same interface.
+ */
+const RATE_LIMIT_WINDOWS = [
+  { windowMs: 60_000, max: 10 },
+  { windowMs: 3_600_000, max: 100 },
+];
+
+const LONGEST_WINDOW_MS = Math.max(...RATE_LIMIT_WINDOWS.map((w) => w.windowMs));
+const SWEEP_INTERVAL_MS = 300_000;
+
+const requestLog = new Map<string, number[]>();
+let lastSweptAt = Date.now();
+
+function getClientIp(request: Request): string {
+  const forwarded = request.headers.get("x-forwarded-for");
+  if (forwarded) return forwarded.split(",")[0].trim();
+  return request.headers.get("x-real-ip") ?? "unknown";
+}
+
+/** Drop stale entries so the map can't grow unbounded across many IPs. */
+function sweepStaleEntries(now: number) {
+  if (now - lastSweptAt < SWEEP_INTERVAL_MS) return;
+  lastSweptAt = now;
+  for (const [ip, timestamps] of requestLog) {
+    const fresh = timestamps.filter((t) => now - t < LONGEST_WINDOW_MS);
+    if (fresh.length === 0) requestLog.delete(ip);
+    else requestLog.set(ip, fresh);
+  }
+}
+
+function checkRateLimit(ip: string): { allowed: boolean; retryAfterSeconds: number } {
+  const now = Date.now();
+  sweepStaleEntries(now);
+
+  const timestamps = (requestLog.get(ip) ?? []).filter((t) => now - t < LONGEST_WINDOW_MS);
+
+  for (const { windowMs, max } of RATE_LIMIT_WINDOWS) {
+    const inWindow = timestamps.filter((t) => now - t < windowMs);
+    if (inWindow.length >= max) {
+      const oldest = Math.min(...inWindow);
+      requestLog.set(ip, timestamps);
+      return {
+        allowed: false,
+        retryAfterSeconds: Math.max(1, Math.ceil((windowMs - (now - oldest)) / 1000)),
+      };
+    }
+  }
+
+  timestamps.push(now);
+  requestLog.set(ip, timestamps);
+  return { allowed: true, retryAfterSeconds: 0 };
+}
+
 const KNOWN_UPSTREAM_KINDS: ApiErrorKind[] = [
   "validation_error",
   "rate_limit_exceeded",
@@ -19,11 +85,28 @@ const KNOWN_UPSTREAM_KINDS: ApiErrorKind[] = [
   "upstream_error",
 ];
 
-function errorResponse(kind: ApiErrorKind, message: string, status: number) {
-  return NextResponse.json({ error: kind, message }, { status });
+function errorResponse(
+  kind: ApiErrorKind,
+  message: string,
+  status: number,
+  headers?: Record<string, string>
+) {
+  return NextResponse.json({ error: kind, message }, { status, headers });
 }
 
 export async function POST(request: Request) {
+  // Checked first: cheapest possible rejection, and it protects everything
+  // downstream (body parsing, and the paid upstream call) from abuse.
+  const { allowed, retryAfterSeconds } = checkRateLimit(getClientIp(request));
+  if (!allowed) {
+    return errorResponse(
+      "rate_limit_exceeded",
+      "Too many messages from this address. Give it a moment and try again.",
+      429,
+      { "Retry-After": String(retryAfterSeconds) }
+    );
+  }
+
   const webhookUrl = process.env.N8N_WEBHOOK_URL;
   const authUser = process.env.N8N_BASIC_AUTH_USER;
   const authPassword = process.env.N8N_BASIC_AUTH_PASSWORD;
