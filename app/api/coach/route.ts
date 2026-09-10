@@ -4,6 +4,12 @@ import type { ApiErrorKind } from "@/app/lib/types";
 // Uses Buffer for Basic Auth encoding, so pin the Node runtime explicitly.
 export const runtime = "nodejs";
 
+// Vercel's default function duration (10s on the Hobby plan) is shorter than
+// our own upstream timeout below -- without this, a slow-but-healthy n8n
+// reply gets cut off by the platform before COACH_REQUEST_TIMEOUT_MS ever
+// fires, producing a confusing generic 504 instead of our own handling.
+export const maxDuration = 30;
+
 const COACH_REQUEST_TIMEOUT_MS = 25_000;
 
 const KNOWN_UPSTREAM_KINDS: ApiErrorKind[] = [
